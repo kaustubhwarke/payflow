@@ -1,0 +1,49 @@
+{
+  "realm": "payflow",
+  "enabled": true,
+  "accessTokenLifespan": 3600,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "roles": {
+    "realm": [
+      { "name": "USER", "description": "Standard PayFlow wallet owner" },
+      { "name": "ADMIN", "description": "PayFlow privileged operator" }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "payflow-public",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "defaultClientScopes": ["roles", "profile", "email"]
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@payflow.test",
+      "firstName": "Alice",
+      "lastName": "Kumar",
+      "credentials": [
+        { "type": "password", "value": "alice123", "temporary": false }
+      ],
+      "realmRoles": ["USER"]
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@payflow.test",
+      "firstName": "Admin",
+      "lastName": "Operator",
+      "credentials": [
+        { "type": "password", "value": "admin123", "temporary": false }
+      ],
+      "realmRoles": ["USER", "ADMIN"]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# Profile used only by the end-to-end DemonstrationRunner.
+# Lowers the rate-limit quota so the 429 throttling demo triggers in a handful of calls.
+payflow:
+  rate-limit:
+    enabled: true
+    capacity: 5
+    refill-period-seconds: 60
+
+logging:
+  level:
+    com.payflow: INFO
