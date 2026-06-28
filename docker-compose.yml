@@ -1,0 +1,75 @@
+# =====================================================================================
+# PayFlow local/production-like infrastructure.
+#   - mysql     : production-grade RDBMS (replaces in-memory H2 - mentor feedback 22.d)
+#   - rabbitmq  : async messaging broker for transaction/notification events
+#   - keycloak  : OAuth2 / OIDC authorization server (Rule 14)
+#   - payflow   : the application itself (profile "docker")
+#
+# Bring infra up:        docker compose up -d mysql rabbitmq keycloak
+# Bring everything up:   docker compose up -d --build
+# =====================================================================================
+services:
+
+  mysql:
+    image: mysql:8.4
+    container_name: payflow-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: payflow
+      MYSQL_USER: payflow
+      MYSQL_PASSWORD: payflow
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpassword"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: payflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: payflow
+      RABBITMQ_DEFAULT_PASS: payflow
+    ports:
+      - "5672:5672"     # AMQP
+      - "15672:15672"   # management UI
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    container_name: payflow-keycloak
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: "true"
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./infra/keycloak/payflow-realm.json:/opt/keycloak/data/import/payflow-realm.json:ro
+
+  payflow:
+    build: .
+    container_name: payflow-api
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    ports:
+      - "8080:8080"
+
+volumes:
+  mysql-data:
